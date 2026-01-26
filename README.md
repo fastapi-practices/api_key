@@ -39,3 +39,24 @@ app.add_middleware(
     on_error=JwtApiKeyAuthMiddleware.auth_exception_handler,
 )
 ```
+
+## 认证流程
+
+```mermaid
+flowchart TD
+    A[Authorization: Bearer token] --> B[token.startswith 'fba-' ?]
+    B -->|Yes| C[API Key 认证]
+    B -->|No| D[JWT Token 认证]
+    C --> I[RBAC 权限校验]
+    D --> I
+```
+
+## 权限控制
+
+API Key 完全继承用户权限
+
+如需限制权限，只需创建专门的 API 用户：
+
+1. 创建受限角色（如 `API 只读角色`），分配必要权限
+2. 创建 API 用户，分配该角色
+3. 使用该用户创建 API Key
