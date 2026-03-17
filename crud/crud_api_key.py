@@ -1,12 +1,9 @@
-from datetime import timedelta
-
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy_crud_plus import CRUDPlus
 
 from backend.plugin.api_key.model import ApiKey
 from backend.plugin.api_key.schema.api_key import CreateApiKeyParam, UpdateApiKeyParam
-from backend.utils.timezone import timezone
 
 
 class CRUDApiKey(CRUDPlus[ApiKey]):
@@ -74,11 +71,9 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param obj: 创建 API Key 参数
         :return:
         """
-        dict_obj = obj.model_dump(exclude={'expire_days'})
+        dict_obj = obj.model_dump()
         dict_obj['user_id'] = user_id
         dict_obj['key'] = key
-        if obj.expire_days is not None:
-            dict_obj['expire_time'] = timezone.now() + timedelta(days=obj.expire_days)
 
         new_api_key = self.model(**dict_obj)
         db.add(new_api_key)
@@ -95,8 +90,18 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param obj: 更新 API Key 参数
         :return:
         """
-        expire_time = timezone.now() + timedelta(days=obj.expire_days) if obj.expire_days is not None else None
-        return await self.update_model(db, pk, obj, expire_time=expire_time)
+        return await self.update_model(db, pk, obj.model_dump(exclude_unset=True))
+
+    async def set_status(self, db: AsyncSession, pk: int, status: int) -> int:
+        """
+        设置 API Key 状态
+
+        :param db: 数据库会话
+        :param pk: API Key ID
+        :param status: 状态
+        :return:
+        """
+        return await self.update_model(db, pk, {'status': status})
 
     async def delete(self, db: AsyncSession, pks: list[int]) -> int:
         """

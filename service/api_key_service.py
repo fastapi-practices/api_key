@@ -68,8 +68,8 @@ class ApiKeyService:
         page_data = await paging_data(db, api_key_select)
 
         for item in page_data['items']:
-            if hasattr(item, 'key'):
-                item.key = mask_key(item.key)
+            if item.get('key') is not None:
+                item['key'] = mask_key(item.get('key'))
 
         return page_data
 
@@ -103,6 +103,22 @@ class ApiKeyService:
         if not is_superuser and user_id != api_key.user_id:
             raise errors.AuthorizationError
         return await api_key_dao.update(db, pk, obj)
+
+    async def update_status(self, *, db: AsyncSession, user_id: int, is_superuser: bool, pk: int) -> int:
+        """
+        切换 API Key 状态
+
+        :param db: 数据库会话
+        :param user_id: 用户 ID
+        :param is_superuser: 用户超级管理员权限
+        :param pk: API Key ID
+        :return:
+        """
+        api_key = await self._get(db=db, user_id=user_id, is_superuser=is_superuser, pk=pk)
+        if not is_superuser and user_id != api_key.user_id:
+            raise errors.AuthorizationError
+        next_status = 0 if api_key.status == 1 else 1
+        return await api_key_dao.set_status(db, pk, next_status)
 
     async def delete(self, *, db: AsyncSession, user_id: int, is_superuser: bool, pks: list[int]) -> int:
         """

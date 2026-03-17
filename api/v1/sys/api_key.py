@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 
+from backend.common.pagination import DependsPagination, PageData
 from backend.common.response.response_code import CustomResponse
 from backend.common.response.response_schema import ResponseModel, ResponseSchemaModel, response_base
 from backend.common.security.jwt import DependsJwtAuth
@@ -21,19 +22,26 @@ router = APIRouter()
 
 @router.get('/{pk}', summary='获取 API Key 详情', dependencies=[DependsJwtAuth])
 async def get_api_key(
-    db: CurrentSession, request: Request, pk: Annotated[int, Path(description='通知公告 ID')]
+    db: CurrentSession, request: Request, pk: Annotated[int, Path(description='API Key ID')]
 ) -> ResponseSchemaModel[GetApiKeyDetail]:
     data = await api_key_service.get(db=db, user_id=request.user.id, is_superuser=request.user.is_superuser, pk=pk)
     return response_base.success(data=data)
 
 
-@router.get('', summary='分页获取所有 API Key', dependencies=[DependsJwtAuth])
+@router.get(
+    '',
+    summary='分页获取所有 API Key',
+    dependencies=[
+        DependsJwtAuth,
+        DependsPagination,
+    ],
+)
 async def get_api_keys_paginated(
     db: CurrentSession,
     request: Request,
     name: Annotated[str | None, Query(description='API Key 名称')] = None,
     status: Annotated[int | None, Query(description='状态')] = None,
-) -> ResponseSchemaModel[list[GetApiKeyDetail]]:
+) -> ResponseSchemaModel[PageData[GetApiKeyDetail]]:
     data = await api_key_service.get_list(
         db=db, user_id=request.user.id, is_superuser=request.user.is_superuser, name=name, status=status
     )
@@ -81,6 +89,28 @@ async def update_api_key(
     return response_base.success()
 
 
+@router.put(
+    '/{pk}/status',
+    summary='切换 API Key 状态',
+    dependencies=[
+        Depends(RequestPermission('sys:apikey:edit')),
+        DependsRBAC,
+    ],
+)
+async def update_api_key_status(
+    db: CurrentSessionTransaction,
+    request: Request,
+    pk: Annotated[int, Path(description='API Key ID')],
+) -> ResponseModel:
+    await api_key_service.update_status(
+        db=db,
+        user_id=request.user.id,
+        is_superuser=request.user.is_superuser,
+        pk=pk,
+    )
+    return response_base.success()
+
+
 @router.delete(
     '',
     summary='批量删除 API Key',
@@ -94,5 +124,10 @@ async def delete_api_keys(
     request: Request,
     obj: DeleteApiKeyParam,
 ) -> ResponseModel:
-    await api_key_service.delete(db=db, user_id=request.user.id, pks=obj.pks)
+    await api_key_service.delete(
+        db=db,
+        user_id=request.user.id,
+        is_superuser=request.user.is_superuser,
+        pks=obj.pks,
+    )
     return response_base.success()

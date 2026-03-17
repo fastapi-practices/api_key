@@ -17,13 +17,13 @@ class ApiKeySchemaBase(SchemaBase):
 class CreateApiKeyParam(ApiKeySchemaBase):
     """创建 API Key 参数"""
 
-    expire_days: int | None = Field(None, ge=1, le=365, description='过期天数（空表示永不过期，最大 365 天）')
+    expire_time: datetime | None = Field(None, description='过期时间（空表示永不过期）')
 
 
 class UpdateApiKeyParam(ApiKeySchemaBase):
     """更新 API Key 参数"""
 
-    expire_days: int | None = Field(None, ge=1, le=365, description='过期天数（空表示永不过期，最大 365 天）')
+    expire_time: datetime | None = Field(None, description='过期时间（空表示永不过期）')
 
 
 class DeleteApiKeyParam(SchemaBase):
