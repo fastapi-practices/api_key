@@ -40,7 +40,7 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         """
         return await self.select_model_by_column(db, key=key)
 
-    async def get_select(self, user_id: int, is_superuser: bool, name: str | None, status: int | None) -> Select:  # noqa: FBT001
+    async def get_select(self, user_id: int | None, is_superuser: bool, name: str | None, status: int | None) -> Select:  # noqa: FBT001
         """
         获取 API Key 列表查询表达式
 
