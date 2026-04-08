@@ -16,6 +16,14 @@ API_KEY_GENERATE_PREFIX: str
 
 ## 使用方式
 
+### 新版本
+
+自 fba v1.13.3 版本起，安装后将自动应用
+
+### 老版本
+
+需要手动替换中间件：
+
 编辑 `backend/core/registrar.py`，替换 JWT 认证中间件：
 
 ```python
