@@ -1,11 +1,3 @@
-"""
-扩展的 JWT 认证中间件，支持 API Key 认证
-
-使用方式：
-    Authorization: Bearer <jwt_token>  # JWT 认证
-    Authorization: Bearer fba_xxxxx    # API Key 认证（以 fba_ 开头）
-"""
-
 from fastapi import Request
 from starlette.authentication import AuthCredentials
 
