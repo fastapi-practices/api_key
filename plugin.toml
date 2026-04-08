@@ -12,3 +12,6 @@ extend = 'admin'
 [api.api_key]
 prefix = '/api-keys'
 tags = '系统 API Key'
+
+[settings]
+API_KEY_GENERATE_PREFIX = 'fba-'

@@ -10,8 +10,8 @@
 ##################################################
 # [ Plugin ] api_key
 ##################################################
-# 基础配置
-API_KEY_GENERATE_PREFIX: str = 'fba-'
+# 基础配置（in plugin.toml）
+API_KEY_GENERATE_PREFIX: str
 ```
 
 ## 使用方式
