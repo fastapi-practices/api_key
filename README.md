@@ -2,69 +2,39 @@
 
 用户自定义 API Key 管理，支持生成、管理和使用 API Key 进行接口认证
 
-## 全局配置
+- API Key 使用 `Authorization: Bearer <api_key>` 传递
+- 认证成功后继承所属用户权限
+- 可通过专用 API 用户和角色限制访问范围
 
-在 `backend/core/conf.py` 中添加以下内容：
+## 插件类型
 
-```python
-##################################################
-# [ Plugin ] api_key
-##################################################
-# 基础配置（in plugin.toml）
-API_KEY_GENERATE_PREFIX: str
+- 扩展级插件
+- 扩展目标：`admin`
+
+## 配置说明
+
+插件目录下 `plugin.toml` 的 `[settings]` 中包含以下内容：
+
+```toml
+[settings]
+API_KEY_GENERATE_PREFIX = 'fba-'
 ```
 
 ## 使用方式
 
-### 新版本
+1. 安装并启用插件后，重启后端服务
+2. 在后台为指定用户创建 API Key
+3. 请求接口时使用 `Authorization: Bearer <api_key>`
+4. 自 fba v1.13.3 起，插件安装后会自动应用；旧版本需在 `backend/core/registrar.py` 中将 `JwtAuthMiddleware` 替换为
+   `JwtApiKeyAuthMiddleware`
+5. 如需限制 API Key 权限，请创建专用角色和 API 用户，再使用该用户创建 API Key
 
-自 fba v1.13.3 版本起，安装后将自动应用
+## 卸载说明
 
-### 老版本
+- 卸载插件后，建议删除已签发的 API Key 数据
+- 如外部系统仍在使用 API Key 调用接口，请同步清理对应配置
 
-需要手动替换中间件：
+## 联系方式
 
-编辑 `backend/core/registrar.py`，替换 JWT 认证中间件：
-
-```python
-# 原来的导入
-# from backend.middleware.jwt_auth_middleware import JwtAuthMiddleware
-
-# 替换为
-from backend.plugin.api_key.middleware import JwtApiKeyAuthMiddleware
-
-# 原来的 JWT auth
-# app.add_middleware(
-#     AuthenticationMiddleware,
-#     backend=JwtAuthMiddleware(),
-#     on_error=JwtAuthMiddleware.auth_exception_handler,
-# )
-
-# 替换为
-app.add_middleware(
-    AuthenticationMiddleware,
-    backend=JwtApiKeyAuthMiddleware(),
-    on_error=JwtApiKeyAuthMiddleware.auth_exception_handler,
-)
-```
-
-## 认证流程
-
-```mermaid
-flowchart TD
-    A[Authorization: Bearer token] --> B[token.startswith 'fba-' ?]
-    B -->|Yes| C[API Key 认证]
-    B -->|No| D[JWT Token 认证]
-    C --> I[RBAC 权限校验]
-    D --> I
-```
-
-## 权限控制
-
-API Key 完全继承用户权限
-
-如需限制权限，只需创建专门的 API 用户：
-
-1. 创建受限角色（如 `API 只读角色`），分配必要权限
-2. 创建 API 用户，分配该角色
-3. 使用该用户创建 API Key
+- 作者：`wu-clan`
+- 反馈方式：提交 Issue 或 PR

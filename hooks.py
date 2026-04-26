@@ -1,7 +1,8 @@
-from backend.plugin.api_key.middleware import JwtApiKeyAuthMiddleware
-from backend.plugin.patching import replace_middleware
 from fastapi import FastAPI
 from starlette.middleware.authentication import AuthenticationMiddleware
+
+from backend.plugin.api_key.middleware import JwtApiKeyAuthMiddleware
+from backend.plugin.patching import replace_middleware
 
 
 def setup(app: FastAPI) -> None:
