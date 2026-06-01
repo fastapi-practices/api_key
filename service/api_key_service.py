@@ -8,7 +8,7 @@ from backend.plugin.api_key.schema.api_key import (
     CreateApiKeyParam,
     UpdateApiKeyParam,
 )
-from backend.plugin.api_key.utils.key_ops import generate_api_key, mask_key
+from backend.plugin.api_key.utils.key_ops import generate_api_key
 
 
 class ApiKeyService:
@@ -31,9 +31,6 @@ class ApiKeyService:
             api_key = await api_key_dao.get(db, pk)
         if not api_key:
             raise errors.NotFoundError(msg='API Key 不存在')
-
-        # 脱敏 key
-        api_key.key = mask_key(api_key.key)
 
         return api_key
 
@@ -70,11 +67,6 @@ class ApiKeyService:
         """
         api_key_select = await api_key_dao.get_select(user_id, is_superuser, name, status)
         page_data = await paging_data(db, api_key_select)
-
-        # 脱敏所有 key
-        for item in page_data['items']:
-            if item.get('key') is not None:
-                item['key'] = mask_key(item.get('key'))
 
         return page_data
 

@@ -2,13 +2,16 @@ from fastapi import Request
 from starlette.authentication import AuthCredentials
 
 from backend.app.admin.schema.user import GetUserInfoWithRelationDetail
+from backend.common.enums import StatusType
+from backend.common.exception import errors
 from backend.common.exception.errors import TokenError
 from backend.common.log import log
 from backend.common.security.jwt import get_jwt_user
 from backend.core.conf import settings
 from backend.database.db import async_db_session
 from backend.middleware.jwt_auth_middleware import AuthenticationError, JwtAuthMiddleware
-from backend.plugin.api_key.utils.key_ops import api_key_verify
+from backend.plugin.api_key.crud import api_key_dao
+from backend.utils.timezone import timezone
 
 
 class JwtApiKeyAuthMiddleware(JwtAuthMiddleware):
@@ -26,27 +29,24 @@ class JwtApiKeyAuthMiddleware(JwtAuthMiddleware):
             return None
 
         if token.startswith(settings.API_KEY_GENERATE_PREFIX):
-            return await self._api_key_authentication(token)
+            try:
+                async with async_db_session() as db:
+                    api_key_obj = await api_key_dao.get_by_key(db, token)
+                    if not api_key_obj:
+                        raise errors.AuthorizationError(msg='API Key 无效')
+                    if api_key_obj.status == StatusType.disable:
+                        raise errors.AuthorizationError(msg='API Key 已被禁用')
+                    if api_key_obj.expire_time is not None and api_key_obj.expire_time < timezone.now():
+                        raise errors.AuthorizationError(msg='API Key 已过期')
 
-        return await super().authenticate(request)
-
-    @staticmethod
-    async def _api_key_authentication(api_key: str) -> tuple[AuthCredentials, GetUserInfoWithRelationDetail]:
-        """
-        API Key 认证
-
-        :param api_key: API Key
-        :return:
-        """
-        try:
-            async with async_db_session() as db:
-                api_key_obj = await api_key_verify(db=db, key=api_key)
                 user_id = api_key_obj.user_id
                 user = await get_jwt_user(user_id)
-        except TokenError as exc:
-            raise AuthenticationError(code=exc.code, msg=exc.detail, headers=exc.headers)
-        except Exception as e:
-            log.exception(f'API Key 授权异常：{e}')
-            raise AuthenticationError(code=getattr(e, 'code', 500), msg=getattr(e, 'msg', 'Internal Server Error'))
+            except TokenError as exc:
+                raise AuthenticationError(code=exc.code, msg=exc.detail, headers=exc.headers)
+            except Exception as e:
+                log.exception(f'API Key 授权异常：{e}')
+                raise AuthenticationError(code=getattr(e, 'code', 500), msg=getattr(e, 'msg', 'Internal Server Error'))
 
-        return AuthCredentials(['authenticated']), user
+            return AuthCredentials(['authenticated']), user
+
+        return await super().authenticate(request)

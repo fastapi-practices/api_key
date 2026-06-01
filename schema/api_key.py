@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, field_validator
 
 from backend.common.enums import StatusType
 from backend.common.schema import SchemaBase
@@ -43,3 +43,8 @@ class GetApiKeyDetail(ApiKeySchemaBase):
     expire_time: datetime | None = Field(description='过期时间')
     created_time: datetime = Field(description='创建时间')
     updated_time: datetime | None = Field(description='更新时间')
+
+    @field_validator('key')
+    @classmethod
+    def validate_key(cls, v: str) -> str:
+        return v[:8] + '********' + v[-4:]
