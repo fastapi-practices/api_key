@@ -11,11 +11,15 @@ class ApiKey(Base):
     """用户 API Key 表"""
 
     __tablename__ = 'sys_api_key'
+    __table_args__ = (
+        sa.UniqueConstraint('key', 'deleted', name='uk_sys_api_key_key_deleted'),
+        {'comment': '用户 API Key 表'},
+    )
 
     id: Mapped[id_key] = mapped_column(init=False)
     user_id: Mapped[int] = mapped_column(sa.BigInteger, index=True, comment='用户 ID')
     name: Mapped[str] = mapped_column(sa.String(64), comment='API Key 名称')
-    key: Mapped[str] = mapped_column(sa.String(64), unique=True, index=True, comment='API Key')
+    key: Mapped[str] = mapped_column(sa.String(64), comment='API Key')
     status: Mapped[int] = mapped_column(default=1, comment='状态（0停用 1正常）')
     expire_time: Mapped[datetime | None] = mapped_column(TimeZone, default=None, comment='过期时间（空表示永不过期）')
     remark: Mapped[str | None] = mapped_column(UniversalText, default=None, comment='备注')

@@ -4,6 +4,7 @@ from sqlalchemy_crud_plus import CRUDPlus
 
 from backend.plugin.api_key.model import ApiKey
 from backend.plugin.api_key.schema.api_key import CreateApiKeyParam, UpdateApiKeyParam
+from backend.utils.timezone import timezone
 
 
 class CRUDApiKey(CRUDPlus[ApiKey]):
@@ -17,7 +18,7 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param pk: API Key ID
         :return:
         """
-        return await self.select_model(db, pk)
+        return await self.select_model(db, pk, deleted=0)
 
     async def get_by_user_id(self, db: AsyncSession, user_id: int, pk: int) -> ApiKey | None:
         """
@@ -28,7 +29,7 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param pk: API Key ID
         :return:
         """
-        return await self.select_model(db, pk, user_id=user_id)
+        return await self.select_model(db, pk, user_id=user_id, deleted=0)
 
     async def get_by_key(self, db: AsyncSession, key: str) -> ApiKey | None:
         """
@@ -38,7 +39,7 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param key: API Key
         :return:
         """
-        return await self.select_model_by_column(db, key=key)
+        return await self.select_model_by_column(db, key=key, deleted=0)
 
     async def get_select(self, user_id: int | None, is_superuser: bool, name: str | None, status: int | None) -> Select:  # noqa: FBT001
         """
@@ -50,7 +51,7 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param status: 状态
         :return:
         """
-        filters = {}
+        filters = {'deleted': 0}
 
         if not is_superuser:
             filters['user_id'] = user_id
@@ -90,7 +91,7 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param obj: 更新 API Key 参数
         :return:
         """
-        return await self.update_model(db, pk, obj.model_dump(exclude_unset=True))
+        return await self.update_model_by_column(db, obj.model_dump(exclude_unset=True), id=pk, deleted=0)
 
     async def set_status(self, db: AsyncSession, pk: int, status: int) -> int:
         """
@@ -101,7 +102,7 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param status: 状态
         :return:
         """
-        return await self.update_model(db, pk, {'status': status})
+        return await self.update_model_by_column(db, {'status': status}, id=pk, deleted=0)
 
     async def delete(self, db: AsyncSession, pks: list[int]) -> int:
         """
@@ -111,7 +112,17 @@ class CRUDApiKey(CRUDPlus[ApiKey]):
         :param pks: API Key ID 列表
         :return:
         """
-        return await self.delete_model_by_column(db, allow_multiple=True, id__in=pks)
+        return await self.delete_model_by_column(
+            db,
+            allow_multiple=True,
+            logical_deletion=True,
+            deleted_flag_column='deleted',
+            deleted_flag_value=self.model.id,
+            deleted_at_column='deleted_time',
+            deleted_at_factory=timezone.now(),
+            id__in=pks,
+            deleted=0,
+        )
 
 
 api_key_dao: CRUDApiKey = CRUDApiKey(ApiKey)
