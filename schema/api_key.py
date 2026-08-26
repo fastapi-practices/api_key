@@ -32,8 +32,8 @@ class DeleteApiKeyParam(SchemaBase):
     pks: list[int] = Field(description='API Key ID 列表')
 
 
-class GetApiKeyDetail(ApiKeySchemaBase):
-    """API Key 列表详情"""
+class _ApiKeyDetailBase(ApiKeySchemaBase):
+    """API Key 详情基类"""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,6 +43,14 @@ class GetApiKeyDetail(ApiKeySchemaBase):
     expire_time: datetime | None = Field(description='过期时间')
     created_time: datetime = Field(description='创建时间')
     updated_time: datetime | None = Field(description='更新时间')
+
+
+class CreateApiKeyDetail(_ApiKeyDetailBase):
+    """创建 API Key 详情（返回完整 key，仅创建时显示一次）"""
+
+
+class GetApiKeyDetail(_ApiKeyDetailBase):
+    """API Key 列表详情（key 脱敏，用于查询/列表）"""
 
     @field_validator('key')
     @classmethod
