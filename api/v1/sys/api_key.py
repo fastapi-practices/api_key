@@ -10,6 +10,7 @@ from backend.common.security.permission import RequestPermission
 from backend.common.security.rbac import DependsRBAC
 from backend.database.db import CurrentSession, CurrentSessionTransaction
 from backend.plugin.api_key.schema.api_key import (
+    CreateApiKeyDetail,
     CreateApiKeyParam,
     DeleteApiKeyParam,
     GetApiKeyDetail,
@@ -60,7 +61,7 @@ async def create_api_key(
     db: CurrentSessionTransaction,
     request: Request,
     obj: CreateApiKeyParam,
-) -> ResponseSchemaModel[GetApiKeyDetail]:
+) -> ResponseSchemaModel[CreateApiKeyDetail]:
     data = await api_key_service.create(db=db, user_id=request.user.id, obj=obj)
     return response_base.success(
         res=CustomResponse(
