@@ -4,7 +4,7 @@ import sqlalchemy as sa
 
 from sqlalchemy.orm import Mapped, mapped_column
 
-from backend.common.model import Base, TimeZone, UniversalText, id_key
+from backend.common.model import Base, id_key
 
 
 class ApiKey(Base):
@@ -21,5 +21,7 @@ class ApiKey(Base):
     name: Mapped[str] = mapped_column(sa.String(64), comment='API Key 名称')
     key: Mapped[str] = mapped_column(sa.String(64), comment='API Key')
     status: Mapped[int] = mapped_column(default=1, comment='状态（0停用 1正常）')
-    expire_time: Mapped[datetime | None] = mapped_column(TimeZone, default=None, comment='过期时间（空表示永不过期）')
-    remark: Mapped[str | None] = mapped_column(UniversalText, default=None, comment='备注')
+    expire_time: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True), default=None, comment='过期时间（空表示永不过期）'
+    )
+    remark: Mapped[str | None] = mapped_column(sa.Text, default=None, comment='备注')

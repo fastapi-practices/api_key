@@ -6,6 +6,7 @@
 - 认证成功后继承所属用户权限
 - 可通过专用 API 用户和角色限制访问范围
 
+
 ## 插件类型
 
 - 扩展级插件
@@ -19,6 +20,10 @@
 [settings]
 API_KEY_GENERATE_PREFIX = 'fba-'
 ```
+
+## 配置项说明
+
+- `API_KEY_GENERATE_PREFIX`：控制生成 API Key 时使用的前缀
 
 ## 使用方式
 

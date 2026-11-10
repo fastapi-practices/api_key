@@ -2,11 +2,11 @@ from fastapi import Request
 from starlette.authentication import AuthCredentials
 
 from backend.app.admin.schema.user import GetUserInfoWithRelationDetail
+from backend.app.admin.service.user_service import user_service
 from backend.common.enums import StatusType
 from backend.common.exception import errors
 from backend.common.exception.errors import TokenError
 from backend.common.log import log
-from backend.common.security.jwt import get_jwt_user
 from backend.core.conf import settings
 from backend.database.db import async_db_session
 from backend.middleware.jwt_auth_middleware import AuthenticationError, JwtAuthMiddleware
@@ -40,7 +40,7 @@ class JwtApiKeyAuthMiddleware(JwtAuthMiddleware):
                         raise errors.AuthorizationError(msg='API Key 已过期')
 
                 user_id = api_key_obj.user_id
-                user = await get_jwt_user(user_id)
+                user = await user_service.get_jwt_user(user_id=user_id)
             except TokenError as exc:
                 raise AuthenticationError(code=exc.code, msg=exc.detail, headers=exc.headers)
             except Exception as e:
